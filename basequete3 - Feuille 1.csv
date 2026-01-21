@@ -1,2 +1,2 @@
 name,password,email,failed_login_attemps,logged_in,role
-utilisateur,utilisateurMDP,utilisateur@gmail.com,0,,
+utilisateur,utilisateurMDP,utilisateur@gmail.com,0,FALSE,utilisateur
