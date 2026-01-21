@@ -1,31 +1,42 @@
 import streamlit as st
-
+import pandas as pd
 
 from streamlit_option_menu import option_menu
 
 from streamlit_authenticator import Authenticate
 
-# Nos données utilisateurs doivent respecter ce format
-lesDonneesDesComptes = {
-    'usernames': {
-        'utilisateur': {
-            'name': 'utilisateur',
-            'password': 'utilisateurMDP',
-            'email': 'utilisateur@gmail.com',
-            'failed_login_attemps': 0,  # Sera géré automatiquement
-            'logged_in': False,          # Sera géré automatiquement
-            'role': 'utilisateur'
-        },
-        'root': {
-            'name': 'root',
-            'password': 'rootMDP',
-            'email': 'admin@gmail.com',
-            'failed_login_attemps': 0,  # Sera géré automatiquement
-            'logged_in': False,          # Sera géré automatiquement
-            'role': 'administrateur'
+
+url_log = "https://raw.githubusercontent.com/paulinegodebout-cyber/Stremlightpart3/refs/heads/main/basequete3%20-%20Feuille%201.csv"
+
+@st.cache_data
+def load_credentials(url: str) -> dict:
+    df = pd.read_csv(url)
+
+    required = ["name", "password", "email", "failed_login_attempts", "logged_in", "role"]
+    missing = [c for c in required if c not in df.columns]
+    if missing:
+        raise ValueError(f"Colonnes manquantes: {missing} | Colonnes trouvées: {list(df.columns)}")
+
+    # Normaliser types
+    df["failed_login_attempts"] = pd.to_numeric(df["failed_login_attempts"], errors="coerce").fillna(0).astype(int)
+    df["logged_in"] = df["logged_in"].astype(str).str.lower().isin(["true", "1", "yes", "y", "vrai"])
+
+    usernames = {}
+    for i, row in df.iterrows():
+        username = str(row["name"]).strip()
+        usernames[username] = {
+            "name": str(row["name"]).strip(),
+            "password": str(row["password"]),
+            "email": str(row["email"]).strip(),
+            "failed_login_attempts": int(row["failed_login_attempts"]),
+            "logged_in": bool(row["logged_in"]),
+            "role": str(row["role"]).strip(),
         }
-    }
-}
+
+    return {"usernames": usernames}
+
+lesDonneesDesComptes = load_credentials(url_log)
+
 
 authenticator = Authenticate(
     lesDonneesDesComptes,  # Les données des comptes
